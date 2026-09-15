@@ -5,6 +5,7 @@
 *.local
 application-local.yml
 application-*.local.yml
+/src/main/resources/application.yml
 
 # Credentials and private keys
 *.key

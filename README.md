@@ -47,11 +47,17 @@
 
 ## 配置
 
-项目只提交配置模板，真实密钥通过环境变量注入。
+仓库提交 `src/main/resources/application.example.yml` 配置模板；本地实际使用的 `src/main/resources/application.yml` 已加入 `.gitignore`。
 
-1. 复制 `.env.example` 为 `.env` 并填写本地值。
-2. 将这些变量导入当前终端或 IDE 的运行配置；Spring Boot 和 npm 不会自动读取根目录 `.env`。
-3. 不要提交 `.env`、私钥、证书、IDE 配置、日志或构建产物。
+1. 首次使用时复制配置模板：
+
+   ```powershell
+   Copy-Item src/main/resources/application.example.yml src/main/resources/application.yml
+   ```
+
+2. 复制 `.env.example` 为 `.env`，并填写本地值或将变量导入 IDE 的运行配置。
+3. 根据需要调整本地 `application.yml`；模板中的敏感字段均使用环境变量占位符。
+4. 不要提交 `.env`、本地 `application.yml`、私钥、证书、IDE 配置、日志或构建产物。
 
 主要变量：
 
