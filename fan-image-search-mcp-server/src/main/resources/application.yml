@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: fan-image-search-mcp-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:sse}
+pexels:
+  api-key: ${PEXELS_API_KEY:}
+server:
+  port: 8127

@@ -1,0 +1,67 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+*.local
+application-local.yml
+application-*.local.yml
+
+# Credentials and private keys
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.json
+secrets.*
+
+# Generated/runtime data
+tmp/
+logs/
+*.log
+*.kryo
+
+# Java / Maven / Gradle
+target/
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+.gradle/
+build/
+
+# Node / frontend build output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-ssr/
+.npm/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and editors
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test and coverage output
+coverage/
+.nyc_output/
+*.exec
