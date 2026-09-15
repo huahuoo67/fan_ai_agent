@@ -20,7 +20,7 @@ class PgVectorVectorStoreConfigTest {
     @Test
     void pgVectorVectorStore() {
         List<Document> documents = List.of(
-                new Document("Fan的Fan项目有什么用？学编程啊，做项目啊", Map.of("meta1", "meta1")),
+                new Document("Fan的ai项目导师有什么用？学编程啊，做项目啊", Map.of("meta1", "meta1")),
                 new Document("程序员Fan的项目示例 "),
                 new Document("Fan这小伙子比较帅气", Map.of("meta2", "meta2")));
         // 添加文档
