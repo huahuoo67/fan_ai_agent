@@ -8,7 +8,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -35,17 +34,15 @@ public class WebSearchTool {
         paramMap.put("engine", "baidu");
         try {
             String response = HttpUtil.get(SEARCH_API_URL, paramMap);
-            // 取出返回结果的前 5 条
             JSONObject jsonObject = JSONUtil.parseObj(response);
-            // 提取 organic_results 部分
-            JSONArray organicResults = jsonObject.getJSONArray("organic_results");
-            List<Object> objects = organicResults.subList(0, 5);
-            // 拼接搜索结果为字符串
-            String result = objects.stream().map(obj -> {
-                JSONObject tmpJSONObject = (JSONObject) obj;
-                return tmpJSONObject.toString();
-            }).collect(Collectors.joining(","));
-            return result;
+            // 提取 organic_results 部分(对json数据进行解析，只取我们需要的部分)
+            JSONArray organicResults = jsonObject.getJSONArray("organic_results");//返回一个数组
+            // JSONArray实现了List<Object>，stream之后去掉外层list之后的类型需要转换
+            return organicResults.stream()
+                    .limit(5)
+                    .map(JSONUtil::parseObj)
+                    .map(JSONObject::toString)
+                    .collect(Collectors.joining(","));
         } catch (Exception e) {
             return "Error searching Baidu: " + e.getMessage();
         }

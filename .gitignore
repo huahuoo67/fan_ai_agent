@@ -1,4 +1,5 @@
 # Local secrets and environment overrides
+.workbuddy
 .env
 .env.*
 !.env.example

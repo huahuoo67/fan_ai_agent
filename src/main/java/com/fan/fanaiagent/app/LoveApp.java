@@ -1,9 +1,6 @@
 package com.fan.fanaiagent.app;
 
 import com.fan.fanaiagent.advisor.MyLoggerAdvisor;
-import com.fan.fanaiagent.advisor.ReReadingAdvisor;
-import com.fan.fanaiagent.chatmemory.FileBasedChatMemory;
-import com.fan.fanaiagent.rag.LoveAppRagCustomAdvisorFactory;
 import com.fan.fanaiagent.rag.QueryRewriter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -95,6 +92,7 @@ public class LoveApp {
                 .prompt()
                 .user(message)
                 .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
+                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
                 .stream()
                 .content();
     }
@@ -124,8 +122,9 @@ public class LoveApp {
 
     // AI 恋爱知识库问答功能
 
-    @Resource
-    private VectorStore loveAppVectorStore;
+    // 内存向量存储已停用，知识库统一改用 PgVector（见 PgVectorVectorStoreConfig）
+    // @Resource
+    // private VectorStore loveAppVectorStore;
 
     @Resource
     private Advisor loveAppRagCloudAdvisor;
@@ -153,12 +152,12 @@ public class LoveApp {
                 .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
-                // 应用 RAG 知识库问答
-                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                // 应用 RAG 知识库问答（基于内存向量存储，已停用）
+//                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
                 // 应用 RAG 检索增强服务（基于云知识库服务）
 //                .advisors(loveAppRagCloudAdvisor)
                 // 应用 RAG 检索增强服务（基于 PgVector 向量存储）
-//                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
+                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
                 // 应用自定义的 RAG 检索增强服务（文档查询器 + 上下文增强器）
 //                .advisors(
 //                        LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(

@@ -31,7 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class BackendRenameSmokeTest {
 
     // Replaces eager knowledge-base initialization, avoiding external API calls.
-    @MockBean(name = "loveAppVectorStore")
+    // 内存向量存储（loveAppVectorStore）已停用，当前生效的是 PgVector，
+    // 因此这里按名字替换 pgVectorVectorStore，避免测试期间真实连库与调用 Embedding。
+    @MockBean(name = "pgVectorVectorStore")
     private VectorStore vectorStore;
 
     @TestConfiguration
