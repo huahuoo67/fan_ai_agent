@@ -2,6 +2,7 @@ package com.fan.fanaiagent.tools;
 
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,22 +17,25 @@ public class ToolRegistration {
     private String searchApiKey;
 
     @Bean
-    public ToolCallback[] allTools() {
+    public ToolCallback[] allTools(ToolCallbackProvider toolCallbackProvider) {
         FileOperationTool fileOperationTool = new FileOperationTool();
         WebSearchTool webSearchTool = new WebSearchTool(searchApiKey);
         WebScrapingTool webScrapingTool = new WebScrapingTool();
         ResourceDownloadTool resourceDownloadTool = new ResourceDownloadTool();
-        TerminalOperationTool terminalOperationTool = new TerminalOperationTool();
         PDFGenerationTool pdfGenerationTool = new PDFGenerationTool();
         TerminateTool terminateTool = new TerminateTool();
-        return ToolCallbacks.from(
+        ToolCallback[] localTools = ToolCallbacks.from(
                 fileOperationTool,
                 webSearchTool,
                 webScrapingTool,
                 resourceDownloadTool,
-                terminalOperationTool,
                 pdfGenerationTool,
                 terminateTool
         );
+        ToolCallback[] mcpTools = toolCallbackProvider.getToolCallbacks();
+        ToolCallback[] tools = new ToolCallback[localTools.length + mcpTools.length];
+        System.arraycopy(localTools, 0, tools, 0, localTools.length);
+        System.arraycopy(mcpTools, 0, tools, localTools.length, mcpTools.length);
+        return tools;
     }
 }

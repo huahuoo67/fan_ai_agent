@@ -235,6 +235,15 @@ public abstract class BaseAgent {
     }
 
     private String readableMessage(Exception e) {
+        Throwable cause = e;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null && (message.contains("AllocationQuota.FreeTierOnly")
+                    || message.contains("Free quota exhausted"))) {
+                return "模型服务额度已用尽，请在模型平台补充额度或关闭仅使用免费额度模式";
+            }
+            cause = cause.getCause();
+        }
         return StrUtil.isBlank(e.getMessage()) ? "智能体执行过程中发生异常" : e.getMessage();
     }
 

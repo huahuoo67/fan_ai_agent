@@ -220,6 +220,9 @@ public class ToolCallAgent extends ReActAgent {
     }
 
     private String toolStatusText(String toolName, boolean running) {
+        if (toolName != null && toolName.endsWith("searchImage")) {
+            return running ? "正在搜索图片" : "图片搜索完成";
+        }
         return switch (toolName) {
             case "searchWeb" -> running ? "正在搜索相关信息" : "相关信息搜索完成";
             case "scrapeWebPage" -> running ? "正在读取网页内容" : "网页内容读取完成";

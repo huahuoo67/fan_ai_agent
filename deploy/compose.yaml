@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fan_ai_agent
+      POSTGRES_USER: fan_ai_agent
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fan_ai_agent -d fan_ai_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  image-mcp:
+    build: ./image-mcp
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: sse
+      PEXELS_API_KEY: ${PEXELS_API_KEY:-}
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx256m
+    expose:
+      - "8127"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      image-mcp:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: "8123"
+      DB_URL: jdbc:postgresql://postgres:5432/fan_ai_agent
+      DB_USERNAME: fan_ai_agent
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:?Set DASHSCOPE_API_KEY in .env}
+      DASHSCOPE_BASE_URL: ${DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com}
+      DASHSCOPE_CHAT_MODEL: ${DASHSCOPE_CHAT_MODEL:-qwen-plus}
+      DASHSCOPE_EMBEDDING_MODEL: ${DASHSCOPE_EMBEDDING_MODEL:-text-embedding-v3}
+      DASHSCOPE_MULTI_MODEL: ${DASHSCOPE_MULTI_MODEL:-false}
+      SEARCH_API_KEY: ${SEARCH_API_KEY:-}
+      IMAGE_MCP_URL: http://image-mcp:8127
+      SPRING_AI_MCP_CLIENT_STDIO_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx768m
+    expose:
+      - "8123"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8123:80"
+
+volumes:
+  pgdata:

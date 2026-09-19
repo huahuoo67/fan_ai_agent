@@ -23,6 +23,7 @@ tmp/
 logs/
 *.log
 *.kryo
+_cleanup_report.txt
 
 # Java / Maven / Gradle
 target/
@@ -67,3 +68,12 @@ Desktop.ini
 coverage/
 .nyc_output/
 *.exec
+
+# Local deployment build outputs and secrets
+.deploy-build/
+deploy/backend/app.jar
+deploy/image-mcp/app.jar
+deploy/frontend/dist/
+deploy/.env
+deploy/frontend/.htpasswd
+deploy/release.tar.gz

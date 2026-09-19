@@ -1,16 +1,18 @@
-# 使用预装 Maven 和 JDK21 的镜像
-FROM maven:3.9-amazoncorretto-21
-WORKDIR /app
-
-# 只复制必要的源代码和配置文件
+FROM maven:3.9-amazoncorretto-21 AS build
+WORKDIR /build
 COPY pom.xml .
-COPY src ./src
+COPY src/main/java ./src/main/java
+COPY src/main/resources/document ./src/main/resources/document
+COPY src/main/resources/application.example.yml ./src/main/resources/application.yml
+COPY src/main/resources/application-prod.yml ./src/main/resources/application-prod.yml
+RUN printf '{"mcpServers":{}}\n' > src/main/resources/mcp-servers.json \
+    && mvn -Dmaven.test.skip=true package
 
-# 使用 Maven 执行打包
-RUN mvn clean package -DskipTests
-
-# 暴露应用端口
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+RUN groupadd --system app && useradd --system --gid app app \
+    && mkdir -p /app/tmp && chown -R app:app /app
+COPY --from=build --chown=app:app /build/target/fan-ai-agent-0.0.1-SNAPSHOT.jar /app/app.jar
+USER app
 EXPOSE 8123
-
-# 使用生产环境配置启动应用
-CMD ["java", "-jar", "/app/target/fan-ai-agent-0.0.1-SNAPSHOT.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

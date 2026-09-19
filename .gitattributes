@@ -1,2 +1,15 @@
+* text=auto
 /mvnw text eol=lf
+/fan-image-search-mcp-server/mvnw text eol=lf
+*.java text eol=lf
+*.vue text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+Dockerfile text eol=lf
+**/Dockerfile text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
 *.cmd text eol=crlf

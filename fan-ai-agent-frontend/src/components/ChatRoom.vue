@@ -144,6 +144,8 @@ const formatAnswer = value => {
     .replaceAll("'", '&#039;')
 
   return escaped
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img class="answer-image" src="$2" alt="$1" loading="lazy" referrerpolicy="no-referrer">')
+    .replace(/(?<!!)\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
@@ -312,6 +314,7 @@ onMounted(scrollToBottom)
 .formatted-answer :deep(h2) { font-size: 18px; }
 .formatted-answer :deep(h3) { font-size: 16px; }
 .formatted-answer :deep(code) { padding: 2px 5px; border-radius: 4px; background: #eef1f6; }
+.formatted-answer :deep(.answer-image) { display: block; max-width: 100%; max-height: 520px; margin: 10px 0; border-radius: 10px; object-fit: contain; }
 .working-indicator { padding: 18px; color: #6f7787; font-size: 14px; }
 .working-indicator span {
   display: inline-block;

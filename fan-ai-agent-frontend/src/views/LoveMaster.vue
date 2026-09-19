@@ -101,6 +101,9 @@ const sendMessage = (message) => {
   // 监听SSE错误
   eventSource.onerror = (error) => {
     console.error('SSE Error:', error)
+    if (aiMessageIndex < messages.value.length && !messages.value[aiMessageIndex].content) {
+      messages.value[aiMessageIndex].content = '请求失败，请检查模型服务额度和模型配置后重试。'
+    }
     connectionStatus.value = 'error'
     eventSource.close()
   }
@@ -241,4 +244,4 @@ onBeforeUnmount(() => {
     margin-bottom: 8px;
   }
 }
-</style> 
+</style>

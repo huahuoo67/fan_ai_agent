@@ -48,8 +48,8 @@ let disposed = false
 const buildChatId = () =>
   globalThis.crypto?.randomUUID?.() || `chat-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-const chatId = sessionStorage.getItem('fan-manus-chat-id') || buildChatId()
-sessionStorage.setItem('fan-manus-chat-id', chatId)
+// 页面没有恢复历史消息时同步创建新会话，避免刷新后继续携带一段用户看不到的旧上下文。
+const chatId = buildChatId()
 
 const addMessage = (content, isUser, type = '') => {
   const message = { content, isUser, type, time: Date.now() }
