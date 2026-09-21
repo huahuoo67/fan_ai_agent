@@ -11,7 +11,7 @@ const routes = [
     }
   },
   {
-    path: '/love-master',
+    path: '/love-master/:conversationId?',
     name: 'LoveMaster',
     component: () => import('../views/LoveMaster.vue'),
     meta: {
@@ -20,7 +20,7 @@ const routes = [
     }
   },
   {
-    path: '/super-agent',
+    path: '/super-agent/:conversationId?',
     name: 'SuperAgent',
     component: () => import('../views/SuperAgent.vue'),
     meta: {
@@ -44,4 +44,4 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
-export default router 
+export default router

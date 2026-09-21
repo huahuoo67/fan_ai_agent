@@ -39,9 +39,29 @@ export const chatWithManus = (message, chatId) =>
 export const stopManus = chatId =>
   request.post('/ai/manus/chat/stop', null, { params: { chatId } })
 
+export const listConversations = chatType =>
+  request.get('/conversations', { params: { chatType } }).then(response => response.data)
+
+export const createConversation = chatType =>
+  request.post('/conversations', { chatType }).then(response => response.data)
+
+export const getConversationMessages = conversationId =>
+  request.get(`/conversations/${conversationId}/messages`).then(response => response.data)
+
+export const renameConversation = (conversationId, title) =>
+  request.patch(`/conversations/${conversationId}`, { title }).then(response => response.data)
+
+export const deleteConversation = conversationId =>
+  request.delete(`/conversations/${conversationId}`)
+
 export default {
   checkHealth,
   chatWithLoveApp,
   chatWithManus,
-  stopManus
+  stopManus,
+  listConversations,
+  createConversation,
+  getConversationMessages,
+  renameConversation,
+  deleteConversation
 }

@@ -2,6 +2,8 @@ package com.fan.fanaiagent.controller;
 
 import com.fan.fanaiagent.agent.FanManus;
 import com.fan.fanaiagent.app.LoveApp;
+import com.fan.fanaiagent.conversation.ChatType;
+import com.fan.fanaiagent.conversation.ConversationService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.ai.chat.model.ChatModel;
@@ -20,6 +22,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -33,30 +36,34 @@ public class AiController {
     private ToolCallback[] allTools;
     @Resource
     private ChatModel dashscopeChatModel;
+    @Resource
+    private ConversationService conversationService;
 
-    /**
-     * 一个 chatId 对应一个 FanManus，通过复用实例保留内存中的消息上下文。
-     */
+    /** 这里只保存正在执行的智能体；长期会话上下文统一存储在 PostgreSQL。 */
     private final ConcurrentMap<String, FanManus> manusSessions = new ConcurrentHashMap<>();
 
     @GetMapping("/love_app/chat/sync")
     public String doChatWithLoveAppSync(String message, String chatId) {
+        conversationService.ensure(chatId, ChatType.LOVE);
         return loveApp.doChat(message, chatId);
     }
 
     @GetMapping(value = "/love_app/chat/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> doChatWithLoveAppSSE(String message, String chatId) {
-        return loveApp.doChatByStream(message, chatId);
+        conversationService.ensure(chatId, ChatType.LOVE);
+        return loveApp.doChatByStream(message, chatId).concatWith(Flux.just("[DONE]"));
     }
 
     @GetMapping(value = "/love_app/chat/server_sent_event")
     public Flux<ServerSentEvent<String>> doChatWithLoveAppServerSentEvent(String message, String chatId) {
+        conversationService.ensure(chatId, ChatType.LOVE);
         return loveApp.doChatByStream(message, chatId)
                 .map(chunk -> ServerSentEvent.<String>builder().data(chunk).build());
     }
 
     @GetMapping(value = "/love_app/chat/sse_emitter")
     public SseEmitter doChatWithLoveAppServerSseEmitter(String message, String chatId) {
+        conversationService.ensure(chatId, ChatType.LOVE);
         SseEmitter emitter = new SseEmitter(180000L);
         loveApp.doChatByStream(message, chatId)
                 .subscribe(chunk -> {
@@ -72,19 +79,35 @@ public class AiController {
     @GetMapping(value = "/manus/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter doChatWithManus(String message, String chatId, HttpServletResponse response) {
         validateManusRequest(message, chatId);
+        conversationService.ensure(chatId, ChatType.MANUS);
         // 禁止浏览器、Servlet 容器前的代理层缓冲 SSE，确保每个 token 立即到达前端。
         response.setHeader("Cache-Control", "no-cache, no-transform");
         response.setHeader("X-Accel-Buffering", "no");
         response.setHeader("Connection", "keep-alive");
         response.setCharacterEncoding("UTF-8");
-        FanManus agent = manusSessions.computeIfAbsent(
-                chatId,
-                ignored -> new FanManus(allTools, dashscopeChatModel)
-        );
+        UUID conversationUuid = conversationService.parseId(chatId);
+        FanManus agent = new FanManus(allTools, dashscopeChatModel);
+        agent.setMessageList(conversationService.loadMemory(chatId));
+        FanManus runningAgent = manusSessions.putIfAbsent(chatId, agent);
+        if (runningAgent != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "当前会话已有任务正在执行");
+        }
+        agent.setExecutionFinishedCallback(() -> {
+            try {
+                String answer = agent.getFinalAnswer();
+                if (StringUtils.hasText(answer)) {
+                    conversationService.append(conversationUuid, "ASSISTANT", answer, "COMPLETED");
+                }
+            } finally {
+                manusSessions.remove(chatId, agent);
+            }
+        });
         try {
+            conversationService.append(conversationUuid, "USER", message, "COMPLETED");
             return agent.runStream(message);
-        } catch (IllegalStateException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        } catch (RuntimeException e) {
+            manusSessions.remove(chatId, agent);
+            throw e;
         }
     }
 

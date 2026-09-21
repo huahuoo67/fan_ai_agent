@@ -39,6 +39,7 @@ public abstract class BaseAgent {
     private volatile boolean executing;
     private volatile boolean stopRequested;
     private volatile boolean clientConnected;
+    private transient Runnable executionFinishedCallback;
 
     public String run(String userPrompt) {
         if (executing) {
@@ -162,6 +163,13 @@ public abstract class BaseAgent {
             executing = false;
             streamEmitter = null;
             cleanup();
+            if (executionFinishedCallback != null) {
+                try {
+                    executionFinishedCallback.run();
+                } catch (Exception callbackError) {
+                    log.error("agent execution completion callback failed, agent={}", name, callbackError);
+                }
+            }
         }
     }
 

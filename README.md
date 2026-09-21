@@ -4,7 +4,7 @@
 
 ## 功能特性
 
-- 恋爱咨询：同步与 SSE 流式对话、会话窗口记忆、RAG 知识库增强。
+- 恋爱咨询：同步与 SSE 流式对话、PostgreSQL 持久化会话记忆、RAG 知识库增强。
 - 智能体执行：基于 ReAct 的多步骤规划与工具调用。
 - 内置工具：网页搜索、网页抓取、文件读写、资源下载、PDF 生成和终端操作。
 - MCP 集成：高德地图 stdio MCP 与 Pexels 图片搜索 SSE MCP。
@@ -139,7 +139,12 @@ npm --prefix fan-ai-agent-frontend run build
 | `GET` | `/api/health` | 健康检查 |
 | `GET` | `/api/ai/love_app/chat/sync` | 同步恋爱咨询，参数为 `message`、`chatId` |
 | `GET` | `/api/ai/love_app/chat/sse` | SSE 流式恋爱咨询，参数为 `message`、`chatId` |
-| `GET` | `/api/ai/manus/chat` | 执行智能体任务，参数为 `message` |
+| `GET` | `/api/ai/manus/chat` | 执行智能体任务，参数为 `message`、`chatId` |
+| `POST` | `/api/conversations` | 创建 LOVE 或 MANUS 会话 |
+| `GET` | `/api/conversations` | 按 `chatType` 查询历史会话 |
+| `GET` | `/api/conversations/{id}/messages` | 加载会话历史消息 |
+| `PATCH` | `/api/conversations/{id}` | 修改会话标题 |
+| `DELETE` | `/api/conversations/{id}` | 删除会话及其消息 |
 | `GET` | `/api/v3/api-docs` | OpenAPI 文档 |
 
 ## Docker 部署
@@ -156,7 +161,7 @@ npm --prefix fan-ai-agent-frontend run build
 ## 已知限制
 
 - 默认知识库使用内存 `SimpleVectorStore`，重启后会重新初始化。
-- 会话历史默认使用内存窗口，未提供跨进程持久化查询。
+- 会话和消息存储在 PostgreSQL 的 `chat_conversation`、`chat_message` 表中，模型默认读取最近 30 条消息作为上下文。
 - PDF 工具目前以文本输出为主，不自动嵌入下载图片。
 - 智能体和部分测试会产生外部 API 调用及费用。
 
