@@ -48,7 +48,7 @@ const isBusy = computed(() => ['checking', 'connecting', 'connected', 'reconnect
 const addMessage = (content, isUser, type = '', time = Date.now()) => {
   const message = { content, isUser, type, time }
   messages.value.push(message)
-  return message
+  return messages.value[messages.value.length - 1]
 }
 const historicalTurn = item => ({
   isUser: false, type: 'agent-turn', time: new Date(item.createdAt).getTime(),
@@ -60,7 +60,7 @@ const createAgentTurn = () => {
   const turn = { isUser:false, type:'agent-turn', time:Date.now(), status:'running', showDetails:true,
     steps:[], answer:'', error:null, notice:null, retryable:false, receivedEvent:false }
   messages.value.push(turn)
-  return turn
+  return messages.value[messages.value.length - 1]
 }
 const finishRunningSteps = (turn, status = 'success') => {
   turn.steps.filter(item => item.status === 'running').forEach(item => { item.status = status })

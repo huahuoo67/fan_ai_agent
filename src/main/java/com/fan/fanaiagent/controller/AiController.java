@@ -49,8 +49,9 @@ public class AiController {
     }
 
     @GetMapping(value = "/love_app/chat/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> doChatWithLoveAppSSE(String message, String chatId) {
+    public Flux<String> doChatWithLoveAppSSE(String message, String chatId, HttpServletResponse response) {
         conversationService.ensure(chatId, ChatType.LOVE);
+        configureSseResponse(response);
         return loveApp.doChatByStream(message, chatId).concatWith(Flux.just("[DONE]"));
     }
 
@@ -80,11 +81,7 @@ public class AiController {
     public SseEmitter doChatWithManus(String message, String chatId, HttpServletResponse response) {
         validateManusRequest(message, chatId);
         conversationService.ensure(chatId, ChatType.MANUS);
-        // 禁止浏览器、Servlet 容器前的代理层缓冲 SSE，确保每个 token 立即到达前端。
-        response.setHeader("Cache-Control", "no-cache, no-transform");
-        response.setHeader("X-Accel-Buffering", "no");
-        response.setHeader("Connection", "keep-alive");
-        response.setCharacterEncoding("UTF-8");
+        configureSseResponse(response);
         UUID conversationUuid = conversationService.parseId(chatId);
         FanManus agent = new FanManus(allTools, dashscopeChatModel);
         agent.setMessageList(conversationService.loadMemory(chatId));
@@ -131,6 +128,14 @@ public class AiController {
         if (!StringUtils.hasText(chatId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "chatId 不能为空");
         }
+    }
+
+    /** 禁止浏览器、Servlet 容器前的代理层缓冲 SSE，确保增量内容立即到达前端。 */
+    private void configureSseResponse(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-transform");
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Connection", "keep-alive");
+        response.setCharacterEncoding("UTF-8");
     }
 }
 

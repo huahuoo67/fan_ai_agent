@@ -170,6 +170,7 @@ watch(
   () => props.messages.map(message => [
     message.steps?.length || 0,
     message.answer?.length || 0,
+    message.content?.length || 0,
     message.status || '',
     message.error || '',
     message.notice || ''

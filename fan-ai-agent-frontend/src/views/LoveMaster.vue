@@ -75,8 +75,8 @@ const removeConversation = async item => {
 const sendMessage = async content => {
   if (!chatId.value) await newConversation()
   messages.value.push({ content, isUser: true, time: Date.now() })
-  const aiMessage = { content: '', isUser: false, time: Date.now() }
-  messages.value.push(aiMessage)
+  const aiMessageIndex = messages.value.length
+  messages.value.push({ content: '', isUser: false, time: Date.now() })
   closeConnection()
   connectionStatus.value = 'connecting'
   eventSource = chatWithLoveApp(content, chatId.value)
@@ -85,10 +85,14 @@ const sendMessage = async content => {
     if (event.data === '[DONE]') {
       connectionStatus.value = 'disconnected'; closeConnection(); refreshConversations(); return
     }
-    aiMessage.content += event.data || ''
+    if (messages.value[aiMessageIndex]) {
+      messages.value[aiMessageIndex].content += event.data || ''
+    }
   }
   eventSource.onerror = () => {
-    if (!aiMessage.content) aiMessage.content = '请求失败，请稍后重试。'
+    if (messages.value[aiMessageIndex] && !messages.value[aiMessageIndex].content) {
+      messages.value[aiMessageIndex].content = '请求失败，请稍后重试。'
+    }
     connectionStatus.value = 'error'; closeConnection(); refreshConversations()
   }
 }
