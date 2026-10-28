@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -36,9 +38,11 @@ public class PgVectorVectorStoreConfig {
     private static final boolean REMOVE_STALE_DOCUMENTS = true;
 
     @Bean
-    public VectorStore pgVectorVectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel dashscopeEmbeddingModel) {
+    @DependsOnDatabaseInitialization
+    public VectorStore pgVectorVectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel dashscopeEmbeddingModel,
+            @org.springframework.beans.factory.annotation.Value("${platform.embedding-dimensions:1024}") int dimensions) {
         return PgVectorStore.builder(jdbcTemplate, dashscopeEmbeddingModel)
-                // .dimensions(1536)                 // 不显式指定，由 Spring AI 按模型真实维度自动推断
+                .dimensions(dimensions)             // avoid a remote dimension probe at startup
                 .distanceType(COSINE_DISTANCE)       // Optional: defaults to COSINE_DISTANCE
                 .indexType(HNSW)                     // Optional: defaults to HNSW
                 .initializeSchema(true)              // Optional: defaults to false
@@ -66,10 +70,12 @@ public class PgVectorVectorStoreConfig {
      * 会报 relation "public.vector_store" does not exist。
      */
     @Bean
+    @ConditionalOnProperty(name="platform.knowledge-sync",havingValue="true",matchIfMissing=true)
     public ApplicationRunner pgVectorDataLoader(@Qualifier("pgVectorVectorStore") VectorStore pgVectorVectorStore,
                                                 LoveAppDocumentLoader loveAppDocumentLoader,
                                                 JdbcTemplate jdbcTemplate) {
         return args -> {
+            try {
             // 1. 加载文档，并给每个 chunk 赋一个「内容不变则 id 不变」的稳定 id
             List<Document> documents = loveAppDocumentLoader.loadMarkdowns().stream()
                     .map(PgVectorVectorStoreConfig::withStableId)
@@ -103,6 +109,9 @@ public class PgVectorVectorStoreConfig {
             if (REMOVE_STALE_DOCUMENTS) {
                 removeStaleDocuments(jdbcTemplate, documents);
             }
+            } catch(Exception e) {
+                log.warn("公共知识库同步未完成，聊天仍可使用；下次启动重试增量同步");
+            }
         };
     }
 
@@ -112,7 +121,7 @@ public class PgVectorVectorStoreConfig {
      */
     private static Document withStableId(Document raw) {
         String filename = String.valueOf(raw.getMetadata().getOrDefault("filename", ""));
-        String fingerprint = filename + "|" + raw.getText();
+        String fingerprint = filename + "|" + raw.getMetadata().get("content_type") + "|" + raw.getText();
         String stableId = UUID.nameUUIDFromBytes(fingerprint.getBytes(StandardCharsets.UTF_8)).toString();
         return new Document(stableId, raw.getText(), raw.getMetadata());
     }

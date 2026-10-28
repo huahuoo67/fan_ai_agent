@@ -45,6 +45,7 @@ public class LoveAppDocumentLoader {
                         .withIncludeCodeBlock(false)
                         .withIncludeBlockquote(false)
                         .withAdditionalMetadata("filename", filename)
+                         .withAdditionalMetadata("content_type", filename != null && filename.matches(".*(情话|语录|合集).*" ) ? "example" : "knowledge")
                         // .withAdditionalMetadata("status", status)
                         .build();
                 MarkdownDocumentReader markdownDocumentReader = new MarkdownDocumentReader(resource, config);

@@ -1,47 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: () => import('../views/Home.vue'),
-    meta: {
-      title: '首页 - FanAI超级智能体应用平台',
-      description: 'FanAI超级智能体应用平台提供AI恋爱大师和AI超级智能体服务，满足您的各种AI对话需求'
-    }
-  },
-  {
-    path: '/love-master/:conversationId?',
-    name: 'LoveMaster',
-    component: () => import('../views/LoveMaster.vue'),
-    meta: {
-      title: 'AI恋爱大师 - FanAI超级智能体应用平台',
-      description: 'AI恋爱大师是FanAI超级智能体应用平台的专业情感顾问，帮你解答各种恋爱问题，提供情感建议'
-    }
-  },
-  {
-    path: '/super-agent/:conversationId?',
-    name: 'SuperAgent',
-    component: () => import('../views/SuperAgent.vue'),
-    meta: {
-      title: 'AI超级智能体 - FanAI超级智能体应用平台',
-      description: 'AI超级智能体是FanAI超级智能体应用平台的全能助手，能解答各类专业问题，提供精准建议和解决方案'
-    }
-  }
-]
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes
+import { restoreSession, session } from '../platform/api'
+const router = createRouter({ history: createWebHistory(), routes: [
+  { path: '/', redirect: '/chat' },
+  { path: '/chat', name: 'chat', component: () => import('../platform/ChatPage.vue') },
+  { path: '/login', name: 'login', component: () => import('../platform/AuthPage.vue'), meta: { public: true } },
+  { path: '/register', name: 'register', component: () => import('../platform/AuthPage.vue'), meta: { public: true } },
+  { path: '/:pathMatch(.*)*', redirect: '/chat' }
+] })
+router.beforeEach(async to => {
+  if (!session.ready) await restoreSession()
+  if (!to.meta.public && !session.user) return '/login'
+  if (to.meta.public && session.user) return '/chat'
+  document.title = 'FanAI · 对话空间'
 })
-
-// 全局导航守卫，设置文档标题
-router.beforeEach((to, from, next) => {
-  // 设置页面标题
-  if (to.meta.title) {
-    document.title = to.meta.title
-  }
-  next()
+window.addEventListener('fan-session-cleared', () => {
+  if (router.currentRoute.value.name === 'chat') router.replace('/login')
 })
-
 export default router

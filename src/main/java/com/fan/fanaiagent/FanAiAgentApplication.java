@@ -10,7 +10,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class FanAiAgentApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(FanAiAgentApplication.class, args);
+        SpringApplication app = new SpringApplication(FanAiAgentApplication.class);
+        app.setAdditionalProfiles("platform");
+        app.run(args);
     }
-
 }

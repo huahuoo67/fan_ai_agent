@@ -4,12 +4,10 @@ import com.fan.fanaiagent.advisor.MyLoggerAdvisor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.stereotype.Component;
 
 /**
  * Fan AI 超级智能体（拥有自主规划能力，可以直接使用）
  */
-@Component
 public class FanManus extends ToolCallAgent {
 
     public FanManus(ToolCallback[] allTools, ChatModel dashscopeChatModel) {
@@ -36,5 +34,6 @@ public class FanManus extends ToolCallAgent {
                 .defaultAdvisors(new MyLoggerAdvisor())
                 .build();
         this.setChatClient(chatClient);
+
     }
 }

@@ -5,6 +5,8 @@ COPY src/main/java ./src/main/java
 COPY src/main/resources/document ./src/main/resources/document
 COPY src/main/resources/application.example.yml ./src/main/resources/application.yml
 COPY src/main/resources/application-prod.yml ./src/main/resources/application-prod.yml
+COPY src/main/resources/application-platform.yml ./src/main/resources/application-platform.yml
+COPY src/main/resources/db ./src/main/resources/db
 RUN printf '{"mcpServers":{}}\n' > src/main/resources/mcp-servers.json \
     && mvn -Dmaven.test.skip=true package
 

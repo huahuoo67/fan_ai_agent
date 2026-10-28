@@ -3,7 +3,6 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $stage = Join-Path $root '.deploy-build'
 $backendOut = Join-Path $PSScriptRoot 'backend\app.jar'
-$mcpOut = Join-Path $PSScriptRoot 'image-mcp\app.jar'
 $frontendOut = Join-Path $PSScriptRoot 'frontend\dist'
 
 function Remove-WorkspaceDirectory([string]$path) {
@@ -31,15 +30,13 @@ Get-ChildItem -LiteralPath $javaSource | Where-Object Name -ne 'demo' | ForEach-
 Copy-Item -LiteralPath (Join-Path $root 'src\main\resources\document') -Destination $resourcesOut -Recurse
 Copy-Item -LiteralPath (Join-Path $root 'src\main\resources\application.example.yml') -Destination (Join-Path $resourcesOut 'application.yml')
 Copy-Item -LiteralPath (Join-Path $root 'src\main\resources\application-prod.yml') -Destination $resourcesOut
+Copy-Item -LiteralPath (Join-Path $root 'src\main\resources\application-platform.yml') -Destination $resourcesOut
+Copy-Item -LiteralPath (Join-Path $root 'src\main\resources\db') -Destination $resourcesOut -Recurse
 '{"mcpServers":{}}' | Set-Content -LiteralPath (Join-Path $resourcesOut 'mcp-servers.json') -Encoding utf8NoBOM
 
 & mvn.cmd -f (Join-Path $stage 'pom.xml') '-Dmaven.test.skip=true' package
 if ($LASTEXITCODE -ne 0) { throw 'Backend Maven package failed' }
 Copy-Item -LiteralPath (Join-Path $stage 'target\fan-ai-agent-0.0.1-SNAPSHOT.jar') -Destination $backendOut -Force
-
-& mvn.cmd -f (Join-Path $root 'fan-image-search-mcp-server\pom.xml') '-Dmaven.test.skip=true' package
-if ($LASTEXITCODE -ne 0) { throw 'Image MCP Maven package failed' }
-Copy-Item -LiteralPath (Join-Path $root 'fan-image-search-mcp-server\target\fan-image-search-mcp-server-0.0.1-SNAPSHOT.jar') -Destination $mcpOut -Force
 
 & npm.cmd --prefix (Join-Path $root 'fan-ai-agent-frontend') ci
 if ($LASTEXITCODE -ne 0) { throw 'Frontend npm ci failed' }
@@ -50,5 +47,4 @@ Copy-Item -LiteralPath (Join-Path $root 'fan-ai-agent-frontend\dist') -Destinati
 
 Write-Output 'Release artifacts built. Tests were not compiled or run.'
 Write-Output "Backend: $backendOut"
-Write-Output "Image MCP: $mcpOut"
 Write-Output "Frontend: $frontendOut"

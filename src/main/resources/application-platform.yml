@@ -1,0 +1,48 @@
+# Loaded by the application entry point. The new database must be empty on first boot.
+spring:
+  datasource:
+    url: ${PLATFORM_DB_URL:jdbc:postgresql://localhost:5432/fan_ai_agent_v2}
+    username: ${PLATFORM_DB_USERNAME:fan_platform}
+    password: ${PLATFORM_DB_PASSWORD:}
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
+  ai:
+    mcp:
+      client:
+        enabled: false
+    retry:
+      max-attempts: 1
+server:
+  servlet:
+    context-path: /api
+    session:
+      timeout: 2h
+      cookie:
+        name: FAN_SESSION
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
+platform:
+  max-concurrent: 2
+  requests-per-minute: 10
+  max-steps: 8
+  timeout-seconds: 180
+  context-characters: 24000
+  history-token-budget: 12000
+  context-token-budget: 48000
+  embedding-dimensions: 1024
+  artifact-root: ${ARTIFACT_ROOT:./tmp/platform-artifacts}
+  artifact-max-bytes: 10485760
+  user-quota-bytes: 52428800
+  admin-account: ${ADMIN_ACCOUNT:}
+  admin-password: ${ADMIN_PASSWORD:}
+logging:
+  level:
+    org.springframework.ai: WARN
+    com.alibaba.cloud.ai: WARN

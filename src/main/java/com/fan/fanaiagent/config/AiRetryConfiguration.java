@@ -16,7 +16,7 @@ public class AiRetryConfiguration {
     @Primary
     public RetryTemplate modelRetryTemplate() {
         return RetryTemplate.builder()
-                .maxAttempts(3)
+                .maxAttempts(1)
                 .exponentialBackoff(1000, 2, 5000)
                 .retryOn(TransientAiException.class)
                 .build();

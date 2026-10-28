@@ -1,0 +1,3 @@
+[submodule "user-center"]
+	path = user-center
+	url = git@github.com:huahuoo67/user-center.git

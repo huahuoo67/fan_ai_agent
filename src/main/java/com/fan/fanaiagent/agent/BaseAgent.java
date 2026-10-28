@@ -41,6 +41,11 @@ public abstract class BaseAgent {
     private volatile boolean clientConnected;
     private transient Runnable executionFinishedCallback;
 
+    /**
+     * 为智能体的循环调用定下一个整体的基调，规划好循环，退出的情况。同步调用。
+     * @param userPrompt
+     * @return
+     */
     public String run(String userPrompt) {
         if (executing) {
             throw new IllegalStateException("Agent is already running");
@@ -58,11 +63,11 @@ public abstract class BaseAgent {
         try {
             for (int i = 0; i < maxSteps && state == AgentState.RUNNING; i++) {
                 currentStep = i + 1;
-                results.add("Step " + currentStep + ": " + step());
+                results.add("Step " + currentStep + ": " + step());//执行在第几步，执行的内容。这里就是直接调用step，具体造作子类定义。
             }
             if (currentStep >= maxSteps && state == AgentState.RUNNING) {
                 state = AgentState.ERROR;
-                results.add("Terminated: Reached max steps (" + maxSteps + ")");
+                results.add("Terminated: Reached max steps (" + maxSteps + ")");//达到最大步数，停止。
             }
             return String.join("\n", results);
         } catch (Exception e) {
@@ -74,6 +79,11 @@ public abstract class BaseAgent {
         }
     }
 
+    /**
+     * 流式异步调用
+     * @param userPrompt
+     * @return
+     */
     public synchronized SseEmitter runStream(String userPrompt) {
         if (executing) {
             throw new IllegalStateException("当前会话已有任务正在执行");
@@ -82,6 +92,7 @@ public abstract class BaseAgent {
             throw new IllegalArgumentException("消息内容为空");
         }
 
+        // 初始化回话的基本状态
         SseEmitter emitter = new SseEmitter(300000L);
         streamEmitter = emitter;
         executing = true;
@@ -91,8 +102,10 @@ public abstract class BaseAgent {
         currentStep = 0;
         resetTurnState();
 
+        // 异步调用
         CompletableFuture.runAsync(() -> executeStream(userPrompt, emitter));
 
+        // 下面是正确或错误处理的各种情况
         emitter.onTimeout(() -> {
             log.info("SSE connection timeout, agent={}", name);
             markClientDisconnected();
@@ -110,6 +123,7 @@ public abstract class BaseAgent {
         return emitter;
     }
 
+    // 具体执行流式调用
     private void executeStream(String userPrompt, SseEmitter emitter) {
         try {
             emit(AgentEvent.builder()
@@ -126,6 +140,7 @@ public abstract class BaseAgent {
                 step();
             }
 
+            // 这是手动暂停
             if (stopRequested || state == AgentState.STOPPED) {
                 state = AgentState.STOPPED;
                 emit(AgentEvent.builder()
@@ -174,7 +189,7 @@ public abstract class BaseAgent {
     }
 
     /**
-     * 请求停止当前任务。工具调用是同步的，因此会在当前工具返回后结束循环。
+     * 请求停止当前任务。工具调用是同步的，因此会在当前工具返回后结束循环。用于手动暂停等。是暴露在外的暂停。
      */
     public void requestStop() {
         if (executing) {
@@ -226,6 +241,9 @@ public abstract class BaseAgent {
                 .build());
     }
 
+    /**
+     * 设计为内部的逻辑调用，是封装在agent内部的暂停需要
+     */
     private void markClientDisconnected() {
         clientConnected = false;
         stopRequested = true;
@@ -234,6 +252,10 @@ public abstract class BaseAgent {
         }
     }
 
+    /**
+     * 静静地关闭sse连接，对话完成后，对话连接要关闭
+     * @param emitter
+     */
     private void completeQuietly(SseEmitter emitter) {
         try {
             emitter.complete();
@@ -242,6 +264,11 @@ public abstract class BaseAgent {
         }
     }
 
+    /**
+     * 可读消息
+     * @param e
+     * @return
+     */
     private String readableMessage(Exception e) {
         Throwable cause = e;
         while (cause != null) {

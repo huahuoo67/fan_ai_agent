@@ -28,12 +28,12 @@ public class MyLoggerAdvisor implements CallAdvisor, StreamAdvisor {
 	}
 
 	private ChatClientRequest before(ChatClientRequest request) {
-		log.info("AI Request: {}", request.prompt());
+		log.debug("AI request received");
 		return request;
 	}
 
 	private void observeAfter(ChatClientResponse chatClientResponse) {
-		log.info("AI Response: {}", chatClientResponse.chatResponse().getResult().getOutput().getText());
+		log.debug("AI response received");
 	}
 
 	@Override
